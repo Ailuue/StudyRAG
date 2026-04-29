@@ -6,21 +6,22 @@ import { db } from "../db/client";
 
 const router = Router();
 
+interface UserRow { id: string; username: string; password: string; }
+
 const RegisterSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1).max(100),
+  username: z.string().min(2).max(30).regex(/^\S+$/, "No spaces allowed"),
   password: z.string().min(8),
 });
 
 const LoginSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(1),
   password: z.string(),
 });
 
-function signToken(id: string, email: string) {
-  return jwt.sign({ id, email }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
-  });
+function signToken(id: string, username: string) {
+  return jwt.sign({ id, username }, process.env.JWT_SECRET!, {
+    expiresIn: "7d",
+  } as jwt.SignOptions);
 }
 
 router.post("/register", async (req, res) => {
@@ -29,21 +30,24 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { email, name, password } = parsed.data;
+  const { username, password } = parsed.data;
 
-  const existing = await db.query("SELECT id FROM users WHERE email = $1", [email]);
+  const existing = await db.query<{ id: string }>(
+    "SELECT id FROM users WHERE username = $1",
+    [username]
+  );
   if (existing.rows.length > 0) {
-    res.status(409).json({ error: "Email already registered" });
+    res.status(409).json({ error: "Username already taken" });
     return;
   }
 
   const hash = await bcrypt.hash(password, 12);
-  const result = await db.query(
-    "INSERT INTO users (email, name, password) VALUES ($1, $2, $3) RETURNING id, email, name",
-    [email, name, hash]
+  const result = await db.query<UserRow>(
+    "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username",
+    [username, hash]
   );
   const user = result.rows[0];
-  res.status(201).json({ token: signToken(user.id, user.email), user });
+  res.status(201).json({ token: signToken(user.id, user.username), user });
 });
 
 router.post("/login", async (req, res) => {
@@ -52,11 +56,11 @@ router.post("/login", async (req, res) => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { email, password } = parsed.data;
+  const { username, password } = parsed.data;
 
-  const result = await db.query(
-    "SELECT id, email, name, password FROM users WHERE email = $1",
-    [email]
+  const result = await db.query<UserRow>(
+    "SELECT id, username, password FROM users WHERE username = $1",
+    [username]
   );
   const user = result.rows[0];
   if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -65,7 +69,7 @@ router.post("/login", async (req, res) => {
   }
 
   const { password: _pw, ...safeUser } = user;
-  res.json({ token: signToken(user.id, user.email), user: safeUser });
+  res.json({ token: signToken(user.id, user.username), user: safeUser });
 });
 
 router.get("/me", async (req, res) => {

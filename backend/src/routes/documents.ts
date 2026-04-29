@@ -25,7 +25,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   const isPdf = req.file.mimetype === "application/pdf";
   const title = req.body.title || req.file.originalname;
 
-  const docResult = await db.query(
+  const docResult = await db.query<{ id: string }>(
     "INSERT INTO documents (user_id, title, source_type, status) VALUES ($1, $2, $3, 'processing') RETURNING id",
     [req.user!.id, title, isPdf ? "pdf" : "text"]
   );
@@ -49,7 +49,7 @@ router.post("/text", async (req, res) => {
     return;
   }
 
-  const docResult = await db.query(
+  const docResult = await db.query<{ id: string }>(
     "INSERT INTO documents (user_id, title, source_type, status) VALUES ($1, $2, 'text', 'processing') RETURNING id",
     [req.user!.id, title]
   );
@@ -91,7 +91,7 @@ async function processDocument(
 
   const chunks = chunkText(rawText);
 
-  const docResult = await db.query(
+  const docResult = await db.query<{ title: string }>(
     "SELECT title FROM documents WHERE id = $1",
     [documentId]
   );

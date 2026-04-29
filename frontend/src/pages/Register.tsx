@@ -6,8 +6,7 @@ import type { User } from "../types";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,13 +18,14 @@ export default function Register() {
     try {
       const res = await api.post<{ token: string; user: User }>(
         "/auth/register",
-        { name, email, password }
+        { username, password }
       );
       setAuth(res.data.token, res.data.user);
       navigate("/");
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Registration failed";
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Registration failed";
       setError(msg);
     } finally {
       setLoading(false);
@@ -47,25 +47,16 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              Username
             </label>
             <input
               type="text"
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              minLength={2}
+              maxLength={30}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>

@@ -41,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">{user?.name}</span>
+          <span className="text-sm text-gray-500">{user?.username}</span>
           <button
             onClick={handleLogout}
             className="text-sm text-gray-500 hover:text-gray-800"

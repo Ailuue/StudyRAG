@@ -20,7 +20,7 @@ router.post("/generate", async (req, res) => {
   }
   const { document_id, count } = parsed.data;
 
-  const doc = await db.query(
+  const doc = await db.query<{ id: string; title: string }>(
     "SELECT id, title FROM documents WHERE id = $1 AND user_id = $2 AND status = 'ready'",
     [document_id, req.user!.id]
   );

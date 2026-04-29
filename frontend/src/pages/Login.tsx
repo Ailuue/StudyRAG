@@ -6,7 +6,7 @@ import type { User } from "../types";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,15 +17,13 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post<{ token: string; user: User }>("/auth/login", {
-        email,
+        username,
         password,
       });
       setAuth(res.data.token, res.data.user);
       navigate("/");
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Invalid credentials";
-      setError(msg);
+    } catch {
+      setError("Invalid username or password");
     } finally {
       setLoading(false);
     }
@@ -46,13 +44,14 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              Username
             </label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>

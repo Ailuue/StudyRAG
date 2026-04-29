@@ -1,7 +1,6 @@
 export interface User {
   id: string;
-  email: string;
-  name: string;
+  username: string;
   created_at: Date;
 }
 
@@ -47,7 +46,7 @@ export interface SourceChunk {
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string; email: string };
+      user?: { id: string; username: string };
     }
   }
 }
